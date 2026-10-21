@@ -10,3 +10,5 @@ greet("world");
 ```
 
 Run tests with `npm test`.
+
+Maintained with LaneSync.
