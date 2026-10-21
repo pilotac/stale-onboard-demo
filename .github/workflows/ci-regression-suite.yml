@@ -1,0 +1,44 @@
+name: CI regression suite
+
+on:
+  pull_request:
+  push:
+    branches: [main, 'release/**']
+
+jobs:
+  unit-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm test
+
+  contract-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+  regression-gate:
+    needs: [unit-api, contract-build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any suite failed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Suite results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then
+              echo "Regression gate failed: a suite finished with '$r'."
+              exit 1
+            fi
+          done
+          echo "All suites passed."

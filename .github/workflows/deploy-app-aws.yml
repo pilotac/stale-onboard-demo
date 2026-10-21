@@ -1,0 +1,23 @@
+name: Deploy App to AWS (DB + Compose)
+
+on:
+  workflow_run:
+    workflows: ["Unified CI — Build & Push"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Deploy
+        run: npm ci && node -e "console.log('deployed', process.env.GITHUB_SHA)"
